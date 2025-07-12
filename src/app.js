@@ -1,9 +1,12 @@
 const express = require("express");
 const connectDB = require("./config/database");
 const bcrypt = require("bcrypt");
+const cookieParser = require("cookie-parser");
+const jwt = require("jsonwebtoken");
 require("dotenv").config();
 const User = require("./models/user");
 const { validateData } = require("./utils/util");
+const userAuth = require("./middlewares/auth");
 const app = express();
 
 //Order of routing is important
@@ -20,6 +23,7 @@ const app = express();
 //   res.send("Hello World");
 // });
 app.use(express.json());
+app.use(cookieParser());
 app.post("/signup", async (req, res) => {
   try {
     validateData(req.body);
@@ -38,70 +42,34 @@ app.post("/login", async (req, res) => {
     if (!user) {
       throw new Error("Invalid Credentials");
     }
-    const isPasswordMatch = await bcrypt.compare(password, user.password);
-    if (!isPasswordMatch) {
+    const isPasswordMatch = await user.getPasswordMathched(password);
+    if (isPasswordMatch) {
+      res.cookie("token", await user.getJWT());
+      res.send("Login successful");
+    } else {
       throw new Error("Invalid Credentials");
     }
-    res.send("Login successful");
   } catch (error) {
     res.status(400).send("Error:" + error.message);
   }
 });
-app.get("/user", async (req, res) => {
+app.get("/profile", userAuth, async (req, res) => {
   try {
-    const users = await User.find();
-    res.json(users);
+    const user = req.user;
+    res.json(user);
   } catch (error) {
-    console.error("Error fetching users");
-    res.status(400).send("error fetching users");
+    res.status(400).send("Error:" + error.message);
   }
 });
-app.delete("/user", async (req, res) => {
-  const userId = req.body.userId;
-
+app.get("/sendConnectionRequest", userAuth, async (req, res) => {
   try {
-    const users = await User.findByIdAndDelete(userId);
-    res.send("User deleted Successfully");
-  } catch (err) {
-    res.status(400).send("Something went wrong", err);
+    const user = req.user;
+    res.send(`Connection request from  ${user.firstName}`);
+  } catch (error) {
+    res.status(400).send("Error:" + error.message);
   }
 });
-// patch user API - updating the data of user
-app.patch("/user/:id", async (req, res) => {
-  const userId = req.params.id;
-  const data = req.body;
 
-  try {
-    const ALLOWED_UPDATES = [
-      "photoURL",
-      "about",
-      "gender",
-      "skills",
-      "firstName",
-      "lastName",
-      "age",
-    ];
-    const updates = Object.keys(data).every((update) =>
-      ALLOWED_UPDATES.includes(update)
-    );
-    if (data.skills.length > 10) {
-      throw new Error("Skills cannot be more than 10");
-    }
-    if (!updates) {
-      throw new Error(
-        `Invalid updates! Allowed updates are: ${ALLOWED_UPDATES.join(", ")}`
-      );
-    }
-    const user = await User.findByIdAndUpdate({ _id: userId }, data, {
-      returnDocument: "before",
-      runValidators: true,
-    });
-
-    res.send("User updated successfully");
-  } catch (err) {
-    res.status(400).send(err.message);
-  }
-});
 connectDB()
   .then(() => {
     console.log("Connected to MongoDB");

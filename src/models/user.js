@@ -1,5 +1,7 @@
 const moongoose = require("mongoose");
 const validator = require("validator");
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcrypt");
 
 const userSchema = new moongoose.Schema(
   {
@@ -67,5 +69,19 @@ const userSchema = new moongoose.Schema(
   },
   { timestamps: true }
 );
-
+userSchema.methods.getJWT = async function () {
+  const user = this;
+  const token = await jwt.sign({ _id: user._id }, process.env.JWT_SECRET_KEY, {
+    expiresIn: "1d",
+  });
+  return token;
+};
+userSchema.methods.getPasswordMathched = async function (passwordbyUserInput) {
+  const user = this;
+  const isPasswordMatch = await bcrypt.compare(
+    passwordbyUserInput,
+    user.password
+  );
+  return isPasswordMatch;
+};
 module.exports = moongoose.model("users", userSchema);
