@@ -1,4 +1,5 @@
 const validator = require("validator");
+const bcrypt = require("bcrypt");
 
 const validateData = (data) => {
   const { firstName, lastName, email, password } = data;
@@ -11,4 +12,21 @@ const validateData = (data) => {
   }
 };
 
-module.exports = { validateData };
+const validateProfileData = (data) => {
+  const DATA_TO_UPDATE = ["skills", "age", "photoUrl", "about"];
+  const matchDataToBeUpdated = Object.keys(data).every((key) =>
+    DATA_TO_UPDATE.includes(key)
+  );
+  return matchDataToBeUpdated;
+};
+
+const validatePasswordMatch = (passwordbyUserInput, user) => {
+  const isPasswordMatch = bcrypt.compare(passwordbyUserInput, user.password);
+  return isPasswordMatch;
+};
+
+module.exports = {
+  validateData,
+  validateProfileData,
+  validatePasswordMatch,
+};
