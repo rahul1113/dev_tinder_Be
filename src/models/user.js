@@ -42,6 +42,7 @@ const userSchema = new moongoose.Schema(
     },
     gender: {
       type: String,
+      required: true,
       validate: {
         validator: function (v) {
           return ["male", "female", "other"].includes(v);

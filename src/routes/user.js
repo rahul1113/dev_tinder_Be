@@ -5,7 +5,7 @@ const userRouter = express.Router();
 const User = require("../models/user");
 
 const USER_DATA_TO_SHOW = "firstName lastName photoUrl age gender about skills";
-userRouter.get("/user/requests/recieved", userAuth, async (req, res) => {
+userRouter.get("/user/requests/received", userAuth, async (req, res) => {
   try {
     let loggedInUser = req.user;
     const connectionRequests = await connectionRequest
