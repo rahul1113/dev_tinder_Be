@@ -1,7 +1,7 @@
 const express = require("express");
 const requestAuth = express.Router();
 const userAuth = require("../middlewares/auth");
-const connectionRequest = require("../Models/connectionRequest");
+const connectionRequest = require("../models/connectionRequest");
 const User = require("../models/user");
 
 requestAuth.post(
